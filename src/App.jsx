@@ -9,10 +9,12 @@ import Dashboard from './pages/Dashboard';
 import UploadModal from './components/UploadModal';
 import TaskResult from './pages/TaskResult';
 import Leaderboard from './pages/Leaderboard';
-import Planner from './pages/Planner';
 import Settings from './pages/Settings';
 import Analytics from './pages/Analytics';
+import Plans from './pages/Plans';
 import AddFundsModal from './components/AddFundsModal';
+import Popup from './components/Popup';
+import LoadingSpinner from './components/LoadingSpinner';
 
 import { subscribeToTasks, subscribeToUser, addTask, deleteTask, updateTaskStatus, updateUserBalance, completeTask, addFunds, failTask } from './services/dbService';
 import { verifyProof } from './services/aiService';
@@ -30,6 +32,8 @@ function MainApp() {
   const [verificationTask, setVerificationTask] = useState(null);
   const [currentTask, setCurrentTask] = useState(null);
   const [showFundsModal, setShowFundsModal] = useState(false);
+  const [popup, setPopup] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+  const [isUploading, setIsUploading] = useState(false);
 
   // 1. Data Subscriptions (Only run if logged in)
   useEffect(() => {
@@ -51,7 +55,12 @@ function MainApp() {
   const handleCommit = async (taskData) => {
     const stakeAmount = parseInt(taskData.stake);
     if (stakeAmount > userProfile.balance) {
-      alert("Insufficient DueCoins! Add funds first.");
+      setPopup({
+        isOpen: true,
+        title: 'Insufficient Balance',
+        message: 'You don\'t have enough DueCoins! Add funds first.',
+        type: 'error'
+      });
       return;
     }
     await updateUserBalance(currentUser.uid, userProfile.balance - stakeAmount);
@@ -65,11 +74,13 @@ function MainApp() {
     if (!verificationTask) return;
 
     setVerificationTask(null);
+    setIsUploading(true);
 
     try {
       const result = await verifyProof(file, verificationTask.objective);
 
       setCurrentTask(verificationTask);
+      setIsUploading(false);
 
       if (result.verified) {
         setAppView('result_success');
@@ -80,14 +91,34 @@ function MainApp() {
       }
     } catch (err) {
       console.error(err);
-      alert("Verification Error: " + err.message);
+      setIsUploading(false);
+      setPopup({
+        isOpen: true,
+        title: 'Verification Error',
+        message: err.message || 'Failed to verify proof. Please try again.',
+        type: 'error'
+      });
     }
   };
 
   const handleDelete = async (taskId) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
-      await deleteTask(currentUser.uid, taskId);
-    }
+    setPopup({
+      isOpen: true,
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task? This action cannot be undone.',
+      type: 'warning',
+      confirmButton: {
+        label: 'Delete',
+        onClick: async () => {
+          await deleteTask(currentUser.uid, taskId);
+          setPopup({ ...popup, isOpen: false });
+        }
+      },
+      cancelButton: {
+        label: 'Cancel',
+        onClick: () => setPopup({ ...popup, isOpen: false })
+      }
+    });
   };
 
   const handleAddFunds = () => {
@@ -104,10 +135,20 @@ function MainApp() {
         // Force local update for immediate feedback (prevents perceived lag)
         setUserProfile(prev => ({ ...prev, balance: (prev.balance || 0) + amount }));
 
-        alert(`Payment Successful! ID: ${paymentId}. ${amount} DueCoins added.`);
+        setPopup({
+          isOpen: true,
+          title: 'Payment Successful',
+          message: `${amount} DueCoins have been added to your account. Payment ID: ${paymentId}`,
+          type: 'success'
+        });
       } catch (error) {
         console.error("Payment sync failed:", error);
-        alert("Payment processed but balance update failed. Please refresh.");
+        setPopup({
+          isOpen: true,
+          title: 'Sync Error',
+          message: 'Payment processed but balance update failed. Please refresh the page.',
+          type: 'warning'
+        });
       }
     }, currentUser.email);
   };
@@ -135,15 +176,26 @@ function MainApp() {
   const renderContent = () => {
     switch (appView) {
       case 'dashboard':
-        return <Dashboard onCreate={handleCommit} onUploadProof={handleUploadClick} onDelete={handleDelete} history={tasks} balance={userProfile.balance} />;
+        return <Dashboard
+          onCreate={handleCommit}
+          onUploadProof={handleUploadClick}
+          onDelete={handleDelete}
+          history={tasks}
+          balance={userProfile.balance}
+          onShowPopup={(config) => setPopup({ isOpen: true, ...config })}
+        />;
       case 'leaderboard':
         return <Leaderboard />;
-      case 'planner':
-        return <Planner stats={userProfile.stats} history={tasks} balance={userProfile.balance} />;
       case 'settings':
-        return <Settings userProfile={userProfile} onProfileUpdate={(updates) => setUserProfile(prev => ({ ...prev, ...updates }))} />;
+        return <Settings
+          userProfile={userProfile}
+          onProfileUpdate={(updates) => setUserProfile(prev => ({ ...prev, ...updates }))}
+          onShowPopup={(config) => setPopup({ isOpen: true, ...config })}
+        />;
       case 'analytics':
         return <Analytics history={tasks} />;
+      case 'plans':
+        return <Plans onShowPopup={(config) => setPopup({ isOpen: true, ...config })} />;
       case 'result_success':
         return <TaskResult result="success" task={currentTask || { stake: 0 }} onHome={() => setAppView('dashboard')} />;
       case 'result_fail':
@@ -174,6 +226,40 @@ function MainApp() {
           onUpload={handleVerify}
         />
       )}
+
+      {/* Loading State for Proof Upload */}
+      {isUploading && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            background: 'hsl(var(--color-bg-card))',
+            borderRadius: '16px',
+            padding: '32px',
+            boxShadow: 'var(--shadow-xl)'
+          }}>
+            <LoadingSpinner message="Uploading and verifying proof..." size="lg" />
+          </div>
+        </div>
+      )}
+
+      {/* Custom Popup */}
+      <Popup
+        isOpen={popup.isOpen}
+        onClose={() => setPopup({ ...popup, isOpen: false })}
+        title={popup.title}
+        message={popup.message}
+        type={popup.type}
+        confirmButton={popup.confirmButton}
+        cancelButton={popup.cancelButton}
+      />
     </>
   );
 }
