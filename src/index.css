@@ -1,0 +1,287 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Clean SaaS Design System (DoOrDue Reference) */
+
+  /* Brand & Accents */
+  --color-primary: 217, 33%, 17%;
+  /* #1E293B - Slate 800 (Actions) */
+  --color-primary-hover: 217, 33%, 10%;
+  --color-accent-gold: 43, 96%, 56%;
+  /* #FBBF24 - DueCoins */
+  --color-accent-green: 142, 71%, 45%;
+  /* #22C55E */
+  --color-accent-blue: 217, 91%, 60%;
+  /* #3B82F6 */
+  --color-accent-red: 0, 84%, 60%;
+  /* #EF4444 */
+
+  /* Text */
+  --color-text-main: 222, 47%, 11%;
+  /* #0F172A - Slate 900 */
+  --color-text-secondary: 215, 16%, 47%;
+  /* #64748B - Slate 500 */
+  --color-text-muted: 215, 25%, 27%;
+  /* #334155 - Slate 700 */
+
+  /* Backgrounds */
+  --color-bg-app: 210, 40%, 98%;
+  /* #F8FAFC - Slate 50 */
+  --color-bg-card: 0, 0%, 100%;
+  /* White */
+  --color-bg-input: 0, 0%, 100%;
+  /* White */
+
+  /* Structural */
+  --header-height: 80px;
+  --max-width: 1200px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  /* For big cards */
+  --radius-pill: 9999px;
+
+  /* Effects */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-float: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+}
+
+/* Reset & Base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  /* Geometric Look */
+  background-color: hsl(var(--color-bg-app));
+  color: hsl(var(--color-text-main));
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100vw;
+}
+
+/* Utility Components */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.card {
+  background-color: hsl(var(--color-bg-card));
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 24px;
+}
+
+.btn {
+  border: none;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background-color: hsl(var(--color-text-secondary));
+  /* Muted Grey default per screenshot "Stake 0" */
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: hsl(var(--color-text-main));
+}
+
+.btn-primary.active {
+  background-color: hsl(var(--color-text-main));
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid #E2E8F0;
+  /* Slate 200 */
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  background: white;
+  color: hsl(var(--color-text-main));
+}
+
+.input-field:focus {
+  border-color: hsl(var(--color-text-secondary));
+}
+
+.text-heading {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: #F1F5F9;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-left: 8px;
+  color: hsl(var(--color-text-secondary));
+}
+
+/* Animations */
+.animate-in {
+  animation: fadeUp 0.4s ease-out forwards;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.4);
+  /* Slate 900 overlay */
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1001;
+  animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Responsive Utilities */
+.hidden-mobile {
+  display: block;
+}
+
+.visible-mobile {
+  display: none;
+}
+
+/* Dashboard Layout */
+.dashboard-split {
+  grid-template-columns: 1fr 1.5fr;
+}
+
+/* Media Queries for Mobile/Tablet */
+@media (max-width: 768px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  .visible-mobile {
+    display: flex !important;
+  }
+
+  .dashboard-split {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Adjust Container */
+  .container {
+    padding: 0 16px;
+  }
+
+  /* Grid Adjustments */
+  .grid-cols-1-mobile {
+    grid-template-columns: 1fr !important;
+  }
+
+  .grid-cols-2-mobile {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Stack layouts vertically */
+  .flex-stack-mobile {
+    flex-direction: column !important;
+  }
+
+  /* Modal Mobile Width */
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    max-height: 80vh;
+  }
+
+  /* Header Adjustments */
+  h1 {
+    font-size: 24px !important;
+  }
+}
