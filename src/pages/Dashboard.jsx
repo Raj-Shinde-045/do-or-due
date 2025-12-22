@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Check, Clock, TrendingUp, Calendar, Upload, MessageSquare, Trash2 } from 'lucide-react';
 
-const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance }) => {
+const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShowPopup }) => {
     const [filter, setFilter] = useState('all');
 
     const pendingCount = history.filter(h => h.status === 'pending').length;
@@ -34,8 +34,13 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance }) => {
                 Stake your coins, complete your tasks, earn rewards.
             </p>
 
-            {/* Stats Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
+            {/* Stats Row - Responsive Grid */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: '16px',
+                marginBottom: '40px'
+            }}>
                 {stats.map((stat, i) => (
                     <div key={i} className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '20px' }}>
                         <div style={{
@@ -141,7 +146,13 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance }) => {
                             style={{ width: '100%', padding: '14px', borderRadius: '8px' }}
                             onClick={() => {
                                 if (!newTask.title || !newTask.stake) {
-                                    alert("Please fill in title and stake");
+                                    if (onShowPopup) {
+                                        onShowPopup({
+                                            title: 'Missing Information',
+                                            message: 'Please fill in both title and stake amount.',
+                                            type: 'warning'
+                                        });
+                                    }
                                     return;
                                 }
 
@@ -150,7 +161,13 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance }) => {
                                     const deadlineDate = new Date(newTask.deadline);
                                     const now = new Date();
                                     if (deadlineDate <= now) {
-                                        alert("⚠️ Deadline must be in the future. Please select a valid date and time.");
+                                        if (onShowPopup) {
+                                            onShowPopup({
+                                                title: 'Invalid Deadline',
+                                                message: 'Deadline must be in the future. Please select a valid date and time.',
+                                                type: 'warning'
+                                            });
+                                        }
                                         return;
                                     }
                                 }
@@ -231,7 +248,13 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance }) => {
                                                 >
                                                     <Upload size={16} /> Upload Proof
                                                 </button>
-                                                <button onClick={() => alert('Chat feature coming soon!')} style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#6366F1', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}>
+                                                <button
+                                                    onClick={() => onShowPopup && onShowPopup({
+                                                        title: 'Coming Soon',
+                                                        message: 'Chat feature is under development and will be available soon!',
+                                                        type: 'info'
+                                                    })}
+                                                    style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#6366F1', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}>
                                                     <MessageSquare size={20} color="white" />
                                                     <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '10px', height: '10px', backgroundColor: '#FBBF24', borderRadius: '50%', border: '2px solid white' }} />
                                                 </button>

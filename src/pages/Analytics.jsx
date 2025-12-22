@@ -23,7 +23,6 @@ const Analytics = ({ history }) => {
         const failed = history.filter(t => t.status === 'failed').length;
 
         return [
-            { name: 'Total Tasks', value: total, color: chartColors.info },
             { name: 'Pending', value: pending, color: chartColors.warning },
             { name: 'Completed', value: completed, color: chartColors.success },
             { name: 'Failed', value: failed, color: chartColors.danger }
@@ -92,13 +91,13 @@ const Analytics = ({ history }) => {
                 Insights into your productivity and task completion patterns
             </p>
 
-            {/* Stats Overview */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-                <div className="card" style={{ textAlign: 'center', padding: '20px' }}>
-                    <Target size={32} color={chartColors.info} style={{ margin: '0 auto 12px' }} />
-                    <div style={{ fontSize: '28px', fontWeight: 700, color: textColor }}>{history.length}</div>
-                    <div style={{ fontSize: '13px', color: secondaryColor }}>Total Tasks</div>
-                </div>
+            {/* Stats Overview - Responsive Grid */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: '16px',
+                marginBottom: '32px'
+            }}>
                 <div className="card" style={{ textAlign: 'center', padding: '20px' }}>
                     <Award size={32} color={chartColors.success} style={{ margin: '0 auto 12px' }} />
                     <div style={{ fontSize: '28px', fontWeight: 700, color: textColor }}>
@@ -133,8 +132,12 @@ const Analytics = ({ history }) => {
                                 data={taskDistribution}
                                 cx="50%"
                                 cy="50%"
-                                labelLine={false}
-                                label={(entry) => `${entry.name}: ${entry.value}`}
+                                labelLine={true}
+                                label={(entry) => {
+                                    // Prevent overlap by checking if value is 0
+                                    if (entry.value === 0) return '';
+                                    return `${entry.name}: ${entry.value}`;
+                                }}
                                 outerRadius={100}
                                 fill="#8884d8"
                                 dataKey="value"

@@ -11,8 +11,8 @@
   /* #FBBF24 - DueCoins */
   --color-accent-green: 142, 71%, 45%;
   /* #22C55E */
-  --color-accent-blue: 217, 91%, 60%;
-  /* #3B82F6 */
+  --color-accent-blue: 217, 91%, 50%;
+  /* Darker blue */
   --color-accent-red: 0, 84%, 60%;
   /* #EF4444 */
 
@@ -68,16 +68,16 @@
   /* #CBD5E1 - Slate 300 */
 
   /* Backgrounds - Dark Mode */
-  --color-bg-app: 222, 47%, 11%;
-  /* #0F172A - Dark slate */
-  --color-bg-card: 217, 33%, 17%;
-  /* #1E293B - Slate 800 */
-  --color-bg-input: 215, 25%, 27%;
-  /* #334155 - Slate 700 */
-  --color-border: 215, 25%, 27%;
-  /* #334155 - Slate 700 */
-  --color-border-light: 217, 33%, 17%;
-  /* #1E293B - Slate 800 */
+  --color-bg-app: 222, 47%, 8%;
+  /* Darker - #0B1120 */
+  --color-bg-card: 217, 33%, 12%;
+  /* Darker - #151E2E */
+  --color-bg-input: 215, 25%, 20%;
+  /* Slightly lighter for inputs - #262E3D */
+  --color-border: 215, 25%, 22%;
+  /* #2A3241 */
+  --color-border-light: 217, 33%, 15%;
+  /* #182231 */
 
   /* Effects - Dark Mode (softer shadows) */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
@@ -279,6 +279,28 @@ body {
     transform: scale(1) translateY(0);
   }
 }
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Additional shadow for modals */
+:root {
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.05);
+}
+
+.dark {
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.7), 0 8px 10px -6px rgb(0 0 0 / 0.6);
+}
+
 
 /* Responsive Utilities */
 .hidden-mobile {

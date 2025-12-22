@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogOut, BarChart3 } from 'lucide-react';
+import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogOut, BarChart3, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { defaultAvatars } from '../data/defaultAvatars';
 
 const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} }) => {
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [showMobileMore, setShowMobileMore] = useState(false);
     const [iconRotating, setIconRotating] = useState(false);
     const { logout } = useAuth();
     const { theme, toggleTheme, isDark } = useTheme();
     const dropdownRef = useRef(null);
+    const mobileMoreRef = useRef(null);
 
     // Click outside detection for dropdown
     useEffect(() => {
@@ -17,15 +19,19 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setShowUserMenu(false);
             }
+            if (mobileMoreRef.current && !mobileMoreRef.current.contains(event.target)) {
+                setShowMobileMore(false);
+            }
         };
 
         const handleEscKey = (event) => {
             if (event.key === 'Escape') {
                 setShowUserMenu(false);
+                setShowMobileMore(false);
             }
         };
 
-        if (showUserMenu) {
+        if (showUserMenu || showMobileMore) {
             document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('keydown', handleEscKey);
         }
@@ -34,7 +40,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleEscKey);
         };
-    }, [showUserMenu]);
+    }, [showUserMenu, showMobileMore]);
 
     const handleLogout = async () => {
         try {
@@ -143,15 +149,14 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                             >
                                 <div style={{
                                     width: '32px', height: '32px', borderRadius: '50%',
-                                    backgroundColor: userProfile.avatar?.bg || (isDark ? 'hsl(var(--color-bg-input))' : '#E2E8F0'),
+                                    backgroundColor: 'hsl(var(--color-bg-input))',
                                     display: 'flex', alignItems: 'center',
                                     justifyContent: 'center', fontWeight: 600, fontSize: '13px',
                                     color: 'hsl(var(--color-text-main))',
-                                    overflow: 'hidden'
+                                    overflow: 'hidden',
+                                    border: `1px solid hsl(var(--color-border))`
                                 }}>
-                                    {userProfile.avatar?.type === 'emoji' ? (
-                                        <span style={{ fontSize: '16px' }}>{userProfile.avatar.value}</span>
-                                    ) : userProfile.avatar?.type === 'custom' ? (
+                                    {userProfile.avatar?.value ? (
                                         <img src={userProfile.avatar.value} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     ) : (
                                         (userProfile.name || userProfile.email || 'U').charAt(0).toUpperCase()
@@ -181,9 +186,10 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                         <p style={{ fontSize: '12px', color: 'hsl(var(--color-text-secondary))' }}>Pro Member</p>
                                     </div>
 
+                                    <DropdownItem onClick={() => { onNavigate('dashboard'); setShowUserMenu(false); }} icon={<Shield size={16} />} label="Dashboard" />
                                     <DropdownItem onClick={() => { onNavigate('leaderboard'); setShowUserMenu(false); }} icon={<Trophy size={16} />} label="Leaderboard" />
-                                    <DropdownItem onClick={() => { onNavigate('planner'); setShowUserMenu(false); }} icon={<Calendar size={16} />} label="Planner" />
                                     <DropdownItem onClick={() => { onNavigate('analytics'); setShowUserMenu(false); }} icon={<BarChart3 size={16} />} label="Analytics" />
+                                    <DropdownItem onClick={() => { onNavigate('plans'); setShowUserMenu(false); }} icon={<Zap size={16} />} label="Plans" />
                                     <DropdownItem onClick={() => { onNavigate('settings'); setShowUserMenu(false); }} icon={<Settings size={16} />} label="Settings" />
 
                                     <div style={{ borderTop: `1px solid hsl(var(--color-border-light))`, margin: '4px 0' }} />
@@ -210,6 +216,29 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                     <span style={{ fontWeight: 800, fontSize: '18px', color: 'hsl(var(--color-text-main))' }}>DoOrDue</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* Theme Toggle Button */}
+                    <button
+                        onClick={() => {
+                            toggleTheme();
+                            setIconRotating(true);
+                            setTimeout(() => setIconRotating(false), 500);
+                        }}
+                        style={{
+                            background: 'hsl(var(--color-bg-input))',
+                            border: 'none',
+                            borderRadius: '8px',
+                            width: '32px',
+                            height: '32px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            transition: 'transform 0.5s',
+                            transform: iconRotating ? 'rotate(360deg)' : 'rotate(0deg)'
+                        }}
+                    >
+                        {isDark ? <Sun size={16} color="hsl(var(--color-text-main))" /> : <Moon size={16} color="hsl(var(--color-text-main))" />}
+                    </button>
                     <div style={{
                         backgroundColor: isDark ? 'hsl(var(--color-bg-input))' : '#F1F5F9',
                         padding: '4px 10px',
@@ -245,18 +274,110 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                     <Shield size={20} />
                     <span style={{ fontSize: '10px', fontWeight: 600 }}>Home</span>
                 </button>
-                <button onClick={() => onNavigate('planner')} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'hsl(var(--color-text-secondary))' }}>
-                    <Calendar size={20} />
-                    <span style={{ fontSize: '10px', fontWeight: 600 }}>Planner</span>
-                </button>
                 <button onClick={() => onNavigate('leaderboard')} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'hsl(var(--color-text-secondary))' }}>
                     <Trophy size={20} />
                     <span style={{ fontSize: '10px', fontWeight: 600 }}>Ranks</span>
                 </button>
-                <button onClick={handleLogout} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', color: '#EF4444' }}>
-                    <LogOut size={20} />
-                    <span style={{ fontSize: '10px', fontWeight: 600 }}>Exit</span>
+                <button onClick={() => onNavigate('analytics')} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'hsl(var(--color-text-secondary))' }}>
+                    <BarChart3 size={20} />
+                    <span style={{ fontSize: '10px', fontWeight: 600 }}>Stats</span>
                 </button>
+
+                {/* More Menu - Three Dots */}
+                <div ref={mobileMoreRef} style={{ position: 'relative' }}>
+                    <button
+                        onClick={() => setShowMobileMore(!showMobileMore)}
+                        style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'hsl(var(--color-text-secondary))' }}
+                    >
+                        <div style={{ display: 'flex', gap: '2px', paddingTop: '2px' }}>
+                            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'currentColor' }} />
+                            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'currentColor' }} />
+                            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'currentColor' }} />
+                        </div>
+                        <span style={{ fontSize: '10px', fontWeight: 600 }}>More</span>
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {showMobileMore && (
+                        <div
+                            className="animate-in"
+                            style={{
+                                position: 'absolute',
+                                bottom: '70px',
+                                right: 0,
+                                background: 'hsl(var(--color-bg-card))',
+                                border: `1px solid hsl(var(--color-border-light))`,
+                                borderRadius: '12px',
+                                boxShadow: 'var(--shadow-xl)',
+                                minWidth: '180px',
+                                padding: '8px',
+                                zIndex: 10001
+                            }}
+                        >
+                            <button
+                                onClick={() => { onNavigate('settings'); setShowMobileMore(false); }}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    color: 'hsl(var(--color-text-main))',
+                                    textAlign: 'left',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                }}
+                            >
+                                <Settings size={16} /> Settings
+                            </button>
+                            <button
+                                onClick={() => { onNavigate('plans'); setShowMobileMore(false); }}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    color: 'hsl(var(--color-text-main))',
+                                    textAlign: 'left',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                }}
+                            >
+                                <Zap size={16} /> Plans
+                            </button>
+                            <div style={{ height: '1px', background: 'hsl(var(--color-border-light))', margin: '4px 0' }} />
+                            <button
+                                onClick={() => { handleLogout(); setShowMobileMore(false); }}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    border: 'none',
+                                    background: 'transparent',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    color: '#EF4444',
+                                    textAlign: 'left',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                }}
+                            >
+                                <LogOut size={16} /> Logout
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
         </div>
