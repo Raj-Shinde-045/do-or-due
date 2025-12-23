@@ -1,9 +1,25 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Lock, Calendar, Flag, Clock } from 'lucide-react';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+const CustomDateTrigger = React.forwardRef(({ value, onClick }, ref) => (
+    <button
+        type="button"
+        onClick={onClick}
+        ref={ref}
+        style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', padding: '6px 8px', fontSize: '13px', background: 'hsl(var(--color-bg-app))', flexShrink: 0, cursor: 'pointer', color: 'hsl(var(--color-text-main))' }}
+    >
+        <Calendar size={14} style={{ marginRight: '6px', color: 'green' }} />
+        <span style={{ whiteSpace: 'nowrap' }}>
+            {value || 'Set Deadline'}
+        </span>
+    </button>
+));
 
 const CreateTask = ({ onBack, onCommit }) => {
     const [objective, setObjective] = useState('');
-    const [deadline, setDeadline] = useState('');
+    const [deadline, setDeadline] = useState(null);
     const [stake, setStake] = useState('10');
 
     const handleSubmit = (e) => {
@@ -56,15 +72,13 @@ const CreateTask = ({ onBack, onCommit }) => {
 
                     {/* Quick Actions Bar - Scrollable on mobile if needed */}
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', padding: '6px 8px', fontSize: '13px', background: 'hsl(var(--color-bg-app))', flexShrink: 0 }}>
-                            <Calendar size={14} style={{ marginRight: '6px', color: 'green' }} />
-                            <input
-                                type="datetime-local"
-                                value={deadline}
-                                onChange={(e) => setDeadline(e.target.value)}
-                                style={{ border: 'none', outline: 'none', fontSize: '12px', background: 'transparent' }}
-                            />
-                        </div>
+                        <DatePicker
+                            selected={deadline}
+                            onChange={(date) => setDeadline(date)}
+                            showTimeSelect
+                            dateFormat="MMM d, h:mm aa"
+                            customInput={<CustomDateTrigger />}
+                        />
 
                         <button type="button" style={{ display: 'flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: '6px', padding: '6px 8px', fontSize: '13px', color: 'hsl(var(--color-text-secondary))', background: 'hsl(var(--color-bg-app))', cursor: 'pointer', flexShrink: 0 }}>
                             <Flag size={14} style={{ marginRight: '6px' }} />

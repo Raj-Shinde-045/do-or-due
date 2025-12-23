@@ -1,5 +1,59 @@
 import React, { useState } from 'react';
-import { Plus, Check, Clock, TrendingUp, Calendar, Upload, MessageSquare, Trash2 } from 'lucide-react';
+import { Plus, Check, Clock, TrendingUp, Calendar, Upload, MessageSquare, Trash2, ChevronRight } from 'lucide-react';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+// Custom Trigger Component for DatePicker to look "Cool" and have pointer cursor
+const CustomDateInput = React.forwardRef(({ value, onClick, placeholder }, ref) => (
+    <div
+        onClick={onClick}
+        ref={ref}
+        style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            padding: '12px 16px',
+            borderRadius: '12px', // Matches var(--radius-md)
+            border: '1px solid hsl(var(--color-border))',
+            backgroundColor: 'hsl(var(--color-bg-input))',
+            color: value ? 'hsl(var(--color-text-main))' : 'hsl(var(--color-text-secondary))',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            position: 'relative',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+        }}
+        className="custom-date-trigger"
+    >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: '24px', height: '24px',
+                borderRadius: '6px',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)', // Blue tint
+                color: '#3B82F6'
+            }}>
+                <Calendar size={14} />
+            </div>
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>
+                {value || placeholder || "Select Deadline"}
+            </span>
+        </div>
+        <Clock size={14} color="hsl(var(--color-text-secondary))" style={{ opacity: 0.7 }} />
+
+        {/* Hover effect handled via CSS class 'custom-date-trigger' in index.css or style tag */}
+        <style>{`
+            .custom-date-trigger:hover {
+                border-color: hsl(var(--color-primary));
+                transform: translateY(-1px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .custom-date-trigger:active {
+                transform: translateY(0);
+            }
+        `}</style>
+    </div>
+));
 import TaskChatAssistant from '../components/TaskChatAssistant';
 
 const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShowPopup }) => {
@@ -18,7 +72,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
         { label: 'At Stake', value: atStake, icon: 'trend', color: 'red' },
     ];
 
-    const [newTask, setNewTask] = useState({ title: '', desc: '', deadline: '', stake: '' });
+    const [newTask, setNewTask] = useState({ title: '', desc: '', deadline: null, stake: '' });
 
     const filteredHistory = history.filter(item => {
         if (filter === 'all') return true;
@@ -96,34 +150,25 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                         </div>
                         <div>
                             <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '8px' }}>Deadline *</label>
-                            <div style={{ display: 'flex', gap: '12px' }}>
-                                <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                                    <Calendar size={16} color="hsl(var(--color-text-secondary))" />
-                                    <input
-                                        type="date"
-                                        style={{ border: 'none', outline: 'none', width: '100%', background: 'transparent', color: 'hsl(var(--color-text-main))' }}
-                                        value={newTask.deadline ? newTask.deadline.split('T')[0] : ''}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        onChange={e => {
-                                            const date = e.target.value;
-                                            const time = newTask.deadline ? newTask.deadline.split('T')[1] : '23:59';
-                                            setNewTask({ ...newTask, deadline: `${date}T${time}` });
-                                        }}
-                                    />
-                                </div>
-                                <div className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '120px' }}>
-                                    <Clock size={16} color="hsl(var(--color-text-secondary))" />
-                                    <input
-                                        type="time"
-                                        style={{ border: 'none', outline: 'none', width: '100%', background: 'transparent', color: 'hsl(var(--color-text-main))' }}
-                                        value={newTask.deadline ? newTask.deadline.split('T')[1] : '23:59'}
-                                        onChange={e => {
-                                            const time = e.target.value;
-                                            const date = newTask.deadline ? newTask.deadline.split('T')[0] : new Date().toISOString().split('T')[0];
-                                            setNewTask({ ...newTask, deadline: `${date}T${time}` });
-                                        }}
-                                    />
-                                </div>
+                            <div style={{ position: 'relative' }}>
+                                <DatePicker
+                                    selected={newTask.deadline}
+                                    onChange={(date) => setNewTask({ ...newTask, deadline: date })}
+                                    showTimeSelect
+                                    dateFormat="MMM d, yyyy h:mm aa"
+                                    placeholderText="Pick a date & time"
+                                    minDate={new Date()}
+                                    customInput={<CustomDateInput />}
+                                    wrapperClassName="react-datepicker-wrapper"
+                                    popperModifiers={[
+                                        {
+                                            name: "offset",
+                                            options: {
+                                                offset: [0, 8],
+                                            },
+                                        },
+                                    ]}
+                                />
                             </div>
                         </div>
                         <div>
@@ -251,7 +296,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, history, balance, onShow
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
                                             <Calendar size={14} color="#64748B" />
                                             <span style={{ fontSize: '13px', color: '#64748B' }}>
-                                                {item.deadline ? `Due: ${new Date(item.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : 'No Deadline'}
+                                                {item.deadline ? `Due: ${new Date(item.deadline?.toDate ? item.deadline.toDate() : item.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : 'No Deadline'}
                                             </span>
                                         </div>
 
