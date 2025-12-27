@@ -90,6 +90,13 @@ const UploadModal = ({ task, onClose, onUpload }) => {
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Check file size (50MB limit)
+            const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+            if (file.size > maxSize) {
+                alert(`File size is ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maximum allowed size is 50MB. Please choose a smaller file.`);
+                return;
+            }
+            console.log(`File selected: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)}MB, Type: ${file.type}`);
             onUpload(file);
         }
     };
@@ -229,7 +236,16 @@ const UploadModal = ({ task, onClose, onUpload }) => {
                                     e.currentTarget.style.borderColor = 'hsl(var(--color-border))';
                                     e.currentTarget.style.background = 'hsl(var(--color-bg-input))';
                                     const file = e.dataTransfer.files[0];
-                                    if (file) onUpload(file);
+                                    if (file) {
+                                        // Check file size (50MB limit)
+                                        const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+                                        if (file.size > maxSize) {
+                                            alert(`File size is ${(file.size / (1024 * 1024)).toFixed(2)}MB. Maximum allowed size is 50MB. Please choose a smaller file.`);
+                                            return;
+                                        }
+                                        console.log(`File dropped: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)}MB, Type: ${file.type}`);
+                                        onUpload(file);
+                                    }
                                 }}
                                 onClick={() => document.getElementById('fileInput').click()}
                             >
@@ -238,7 +254,7 @@ const UploadModal = ({ task, onClose, onUpload }) => {
                                     Click to upload or drag and drop
                                 </p>
                                 <p style={{ fontSize: '14px', color: 'hsl(var(--color-text-secondary))' }}>
-                                    Images, PDF, DOC, Videos, Audio & more (up to 50MB)
+                                    Images, PDF, DOC &amp; more (max 700KB)
                                 </p>
                             </div>
                             <input
