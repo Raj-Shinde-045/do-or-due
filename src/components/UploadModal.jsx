@@ -238,13 +238,13 @@ const UploadModal = ({ task, onClose, onUpload }) => {
                                     Click to upload or drag and drop
                                 </p>
                                 <p style={{ fontSize: '14px', color: 'hsl(var(--color-text-secondary))' }}>
-                                    PNG, JPG, GIF up to 10MB
+                                    Images, PDF, DOC, Videos, Audio & more (up to 50MB)
                                 </p>
                             </div>
                             <input
                                 id="fileInput"
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.zip,.rar,.7z"
                                 onChange={handleFileSelect}
                                 style={{ display: 'none' }}
                             />
