@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Check, Clock, TrendingUp, Calendar, Upload, MessageSquare, Trash2, ChevronRight } from 'lucide-react';
+import { Plus, Check, Clock, TrendingUp, Calendar, Upload, MessageSquare, Trash2, ChevronRight, Flame } from 'lucide-react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -88,6 +88,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
     // Stats Data
     const stats = [
         { label: 'Balance', value: balance, icon: 'coins', color: 'orange' },
+        { label: 'Active Streak', value: userProfile?.streak || 0, icon: 'flame', color: 'orange' },
         { label: 'Pending', value: pendingCount, icon: 'list', color: 'blue' },
         { label: 'Completed', value: completedCount, icon: 'check', color: 'green' },
         { label: 'At Stake', value: atStake, icon: 'trend', color: 'red' },
@@ -106,8 +107,26 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
         return true;
     });
 
+    // Sort locally to ensure latest is always on top (handling potential latency)
+    const sortedHistory = [...filteredHistory].sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return dateB - dateA;
+    });
+
     const [showAllTasks, setShowAllTasks] = useState(false);
-    const displayedTasks = showAllTasks ? filteredHistory : filteredHistory.slice(0, 5);
+
+    // Logic: Always show ALL pending/active tasks. Only limit the "Done/Failed" history.
+    const activeTasks = sortedHistory.filter(t => t.status === 'pending' || t.status === 'pending_review');
+    const pastTasks = sortedHistory.filter(t => t.status !== 'pending' && t.status !== 'pending_review');
+
+    // If filter is 'all', show all active + limited past. If filter is specific, show all matching.
+    let displayedTasks;
+    if (filter === 'all') {
+        displayedTasks = [...activeTasks, ...(showAllTasks ? pastTasks : pastTasks.slice(0, 5))];
+    } else {
+        displayedTasks = showAllTasks ? sortedHistory : sortedHistory.slice(0, 10);
+    }
 
     const handleDonateClick = (task) => {
         if (userProfile?.defaultCharity) {
@@ -147,10 +166,9 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
                 Stake your coins, complete your tasks, earn rewards.
             </p>
 
-            {/* Stats Row - Responsive Grid */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '16px',
                 marginBottom: '40px'
             }}>
@@ -164,6 +182,7 @@ const Dashboard = ({ onCreate, onUploadProof, onDelete, onExpire, history, balan
                         }}>
                             {/* Simple Icon Logic */}
                             {stat.icon === 'coins' && <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid orange' }} />}
+                            {stat.icon === 'flame' && <Flame size={20} color="#F97316" fill="#F97316" />}
                             {stat.icon === 'list' && <div style={{ width: '20px', height: '14px', border: '2px solid #3B82F6', borderTop: 'none' }} />}
                             {stat.icon === 'check' && <Check size={20} color="#22C55E" />}
                             {stat.icon === 'trend' && <TrendingUp size={20} color="#EF4444" />}

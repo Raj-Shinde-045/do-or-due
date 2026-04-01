@@ -1,21 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogOut, BarChart3, Zap, Menu, X, Home } from 'lucide-react';
+import { Shield, Coins, Moon, Sun, ChevronDown, Trophy, Calendar, Settings, LogOut, BarChart3, Zap, Home, Flame } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { defaultAvatars } from '../data/defaultAvatars';
+import { requestNotificationPermission } from '../services/dbService';
 
-const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} }) => {
+const Layout = ({ children, onNavigate, balance, onAddFunds, onWithdrawFunds, userProfile = {} }) => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showMobileMore, setShowMobileMore] = useState(false);
-    const [showMobileMenu, setShowMobileMenu] = useState(false); // Hamburger Menu State
     const [iconRotating, setIconRotating] = useState(false);
-    const { logout } = useAuth();
+    const { logout, currentUser } = useAuth();
     const { theme, toggleTheme, isDark } = useTheme();
     const dropdownRef = useRef(null);
     const mobileMoreRef = useRef(null);
-    const mobileMenuRef = useRef(null);
 
-    // Click outside detection for dropdowns and mobile menu
+    // Click outside detection for dropdowns
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -24,20 +23,16 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             if (mobileMoreRef.current && !mobileMoreRef.current.contains(event.target)) {
                 setShowMobileMore(false);
             }
-            if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
-                setShowMobileMenu(false);
-            }
         };
 
         const handleEscKey = (event) => {
             if (event.key === 'Escape') {
                 setShowUserMenu(false);
                 setShowMobileMore(false);
-                setShowMobileMenu(false);
             }
         };
 
-        if (showUserMenu || showMobileMore || showMobileMenu) {
+        if (showUserMenu || showMobileMore) {
             document.addEventListener('mousedown', handleClickOutside);
             document.addEventListener('keydown', handleEscKey);
         }
@@ -46,7 +41,21 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleEscKey);
         };
-    }, [showUserMenu, showMobileMore, showMobileMenu]);
+    }, [showUserMenu, showMobileMore]);
+
+    // Request permissions for Zomato-style behavioral nudges
+    useEffect(() => {
+        if (userProfile && userProfile.email && !userProfile.fcmToken) {
+            // Wait 2 seconds so it isn't an immediate jump-scare on load
+            const timer = setTimeout(() => {
+                if ('Notification' in window && Notification.permission !== 'denied') {
+                    // This asks the browser silently, only opens popup if they haven't explicitly blocked it
+                    requestNotificationPermission(userProfile.id || userProfile.uid || currentUser?.uid);
+                }
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [userProfile]);
 
     const handleLogout = async () => {
         try {
@@ -64,7 +73,6 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
 
     const handleNavAndClose = (page) => {
         onNavigate(page);
-        setShowMobileMenu(false);
     };
 
     return (
@@ -85,7 +93,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                     padding: '0 24px',
                     zIndex: 50,
                     position: 'relative',
-                    border: `1px solid hsl(var(--color-border))`
+                    border: `1px solid hsl(var(--color - border))`
                 }}>
                     {/* Logo Area */}
                     <button onClick={() => onNavigate('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -110,10 +118,26 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                 transition: 'all 0.2s'
                             }}
                         >
-                            <div className={`theme-toggle-icon ${iconRotating ? 'rotating' : ''}`}>
+                            <div className={`theme - toggle - icon ${iconRotating ? 'rotating' : ''} `}>
                                 {isDark ? <Sun size={18} color="hsl(var(--color-text-main))" /> : <Moon size={18} color="hsl(var(--color-text-main))" />}
                             </div>
                         </button>
+
+                        {/* Streak Pill */}
+                        <div style={{
+                            backgroundColor: isDark ? 'hsl(var(--color-bg-input))' : '#FFF7ED',
+                            padding: '6px 12px',
+                            borderRadius: 'var(--radius-pill)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: 'hsl(var(--color-text-main))'
+                        }}>
+                            <Flame size={14} color="#F97316" fill="#F97316" />
+                            {userProfile.streak || 0}
+                        </div>
 
                         {/* Coins Pill */}
                         <div style={{
@@ -129,25 +153,48 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                         }}>
                             <Coins size={14} color="hsl(var(--color-accent-gold))" fill="hsl(var(--color-accent-gold))" />
                             {balance}
-                            <button
-                                onClick={onAddFunds}
-                                style={{
-                                    background: isDark ? 'hsl(var(--color-border))' : '#E2E8F0',
-                                    border: 'none',
-                                    borderRadius: '50%',
-                                    width: '16px',
-                                    height: '16px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '12px',
-                                    marginLeft: '4px',
-                                    cursor: 'pointer',
-                                    color: 'hsl(var(--color-text-main))'
-                                }}
-                            >
-                                +
-                            </button>
+                            <div style={{ display: 'flex', gap: '4px', marginLeft: '4px' }}>
+                                <button
+                                    onClick={onWithdrawFunds}
+                                    style={{
+                                        background: isDark ? 'hsl(var(--color-border))' : '#FEE2E2',
+                                        border: '1px solid #FECACA',
+                                        borderRadius: '50%',
+                                        width: '18px',
+                                        height: '18px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        color: '#EF4444',
+                                        padding: 0
+                                    }}
+                                    title="Withdraw Funds"
+                                >
+                                    -
+                                </button>
+                                <button
+                                    onClick={onAddFunds}
+                                    style={{
+                                        background: isDark ? 'hsl(var(--color-border))' : '#DCFCE7',
+                                        border: '1px solid #BBF7D0',
+                                        borderRadius: '50%',
+                                        width: '18px',
+                                        height: '18px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '14px',
+                                        cursor: 'pointer',
+                                        color: '#16A34A',
+                                        padding: 0
+                                    }}
+                                    title="Add Funds"
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
 
                         {/* Avatar & Dropdown */}
@@ -165,7 +212,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                     justifyContent: 'center', fontWeight: 600, fontSize: '13px',
                                     color: 'hsl(var(--color-text-main))',
                                     overflow: 'hidden',
-                                    border: `1px solid hsl(var(--color-border))`
+                                    border: `1px solid hsl(var(--color - border))`
                                 }}>
                                     {userProfile.avatar?.value ? (
                                         <img src={userProfile.avatar.value} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -186,11 +233,11 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                     backgroundColor: 'hsl(var(--color-bg-card))',
                                     borderRadius: '16px',
                                     boxShadow: 'var(--shadow-lg)',
-                                    border: `1px solid hsl(var(--color-border-light))`,
+                                    border: `1px solid hsl(var(--color - border - light))`,
                                     padding: '8px',
                                     zIndex: 100
                                 }}>
-                                    <div style={{ padding: '8px 12px', borderBottom: `1px solid hsl(var(--color-border-light))`, marginBottom: '4px' }}>
+                                    <div style={{ padding: '8px 12px', borderBottom: `1px solid hsl(var(--color - border - light))`, marginBottom: '4px' }}>
                                         <p style={{ fontWeight: 600, fontSize: '14px', color: 'hsl(var(--color-text-main))' }}>
                                             {userProfile.name || userProfile.email?.split('@')[0] || 'User'}
                                         </p>
@@ -205,7 +252,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                     <DropdownItem onClick={() => { onNavigate('plans'); setShowUserMenu(false); }} icon={<Zap size={16} />} label="Plans" />
                                     <DropdownItem onClick={() => { onNavigate('settings'); setShowUserMenu(false); }} icon={<Settings size={16} />} label="Settings" />
 
-                                    <div style={{ borderTop: `1px solid hsl(var(--color-border-light))`, margin: '4px 0' }} />
+                                    <div style={{ borderTop: `1px solid hsl(var(--color - border - light))`, margin: '4px 0' }} />
 
                                     <button onClick={handleLogout} style={{
                                         display: 'flex', alignItems: 'center', gap: '10px',
@@ -223,12 +270,9 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             </div>
 
             {/* --- MOBILE HEADER --- */}
-            <div className="visible-mobile" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'hsl(var(--color-bg-card))', position: 'sticky', top: 0, zIndex: 40, borderBottom: `1px solid hsl(var(--color-border-light))` }}>
+            <div className="visible-mobile" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', backgroundColor: 'hsl(var(--color-bg-card))', position: 'sticky', top: 0, zIndex: 40, borderBottom: `1px solid hsl(var(--color - border - light))` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {/* Hamburger Button */}
-                    <button onClick={() => setShowMobileMenu(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'hsl(var(--color-text-main))' }}>
-                        <Menu size={24} />
-                    </button>
+                    {/* Hamburger Button Removed */}
                     <button onClick={() => onNavigate('dashboard')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none' }}>
                         <Shield fill="hsl(var(--color-text-main))" size={20} color="hsl(var(--color-text-main))" />
                         <span style={{ fontWeight: 800, fontSize: '18px', color: 'hsl(var(--color-text-main))' }}>DoOrDue</span>
@@ -260,6 +304,21 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                     </button>
 
                     <div style={{
+                        backgroundColor: isDark ? 'hsl(var(--color-bg-input))' : '#FFF7ED',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: 'hsl(var(--color-text-main))'
+                    }}>
+                        <Flame size={12} color="#F97316" fill="#F97316" />
+                        {userProfile.streak || 0}
+                    </div>
+
+                    <div style={{
                         backgroundColor: isDark ? 'hsl(var(--color-bg-input))' : '#F1F5F9',
                         padding: '4px 10px',
                         borderRadius: '12px',
@@ -272,95 +331,53 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                     }}>
                         <Coins size={12} fill="hsl(var(--color-accent-gold))" color="hsl(var(--color-accent-gold))" />
                         {balance}
-                        <button onClick={onAddFunds} style={{ border: 'none', background: 'transparent', fontWeight: 'bold', cursor: 'pointer', color: 'hsl(var(--color-text-main))' }}>+</button>
+                        <div style={{ display: 'flex', gap: '4px', marginLeft: '4px' }}>
+                            <button
+                                onClick={onWithdrawFunds}
+                                style={{
+                                    background: isDark ? 'hsl(var(--color-border))' : '#FEE2E2',
+                                    border: '1px solid #FECACA',
+                                    borderRadius: '50%',
+                                    width: '16px',
+                                    height: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                    color: '#EF4444',
+                                    padding: 0
+                                }}
+                                title="Withdraw Funds"
+                            >
+                                -
+                            </button>
+                            <button
+                                onClick={onAddFunds}
+                                style={{
+                                    background: isDark ? 'hsl(var(--color-border))' : '#DCFCE7',
+                                    border: '1px solid #BBF7D0',
+                                    borderRadius: '50%',
+                                    width: '16px',
+                                    height: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '12px',
+                                    cursor: 'pointer',
+                                    color: '#16A34A',
+                                    padding: 0
+                                }}
+                                title="Add Funds"
+                            >
+                                +
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* --- MOBILE MENU SIDE DRAWER --- */}
-            {showMobileMenu && (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 2000 }}>
-                    {/* Backdrop */}
-                    <div
-                        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
-                        onClick={() => setShowMobileMenu(false)}
-                    />
-
-                    {/* Drawer */}
-                    <div
-                        ref={mobileMenuRef}
-                        className="animate-in-slide-right"
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                            width: '280px',
-                            maxWidth: '80%',
-                            backgroundColor: 'hsl(var(--color-bg-card))',
-                            boxShadow: 'var(--shadow-xl)',
-                            padding: '24px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '24px',
-                            transform: 'translateX(0)', // Animation handled by class
-                            transition: 'transform 0.3s ease'
-                        }}
-                    >
-                        {/* Close Button & Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'hsl(var(--color-text-main))' }}>Menu</h2>
-                            <button onClick={() => setShowMobileMenu(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(var(--color-text-secondary))' }}>
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        {/* User Profile Summary */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '20px', borderBottom: '1px solid hsl(var(--color-border))' }}>
-                            <div style={{
-                                width: '48px', height: '48px', borderRadius: '50%',
-                                backgroundColor: 'hsl(var(--color-bg-input))',
-                                display: 'flex', alignItems: 'center',
-                                justifyContent: 'center', fontWeight: 700, fontSize: '18px',
-                                color: 'hsl(var(--color-text-main))',
-                                overflow: 'hidden',
-                                border: `2px solid hsl(var(--color-border))`
-                            }}>
-                                {userProfile.avatar?.value ? (
-                                    <img src={userProfile.avatar.value} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                ) : (
-                                    (userProfile.name || userProfile.email || 'U').charAt(0).toUpperCase()
-                                )}
-                            </div>
-                            <div>
-                                <div style={{ fontWeight: 700, color: 'hsl(var(--color-text-main))' }}>{userProfile.name || 'User'}</div>
-                                <div style={{ fontSize: '13px', color: 'hsl(var(--color-text-secondary))' }}>{userProfile.email}</div>
-                            </div>
-                        </div>
-
-                        {/* Navigation Links */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <DropdownItem onClick={() => handleNavAndClose('dashboard')} icon={<Home size={20} />} label="Dashboard" />
-                            <DropdownItem onClick={() => handleNavAndClose('leaderboard')} icon={<Trophy size={20} />} label="Leaderboard" />
-                            <DropdownItem onClick={() => handleNavAndClose('analytics')} icon={<BarChart3 size={20} />} label="Analytics" />
-                            <DropdownItem onClick={() => handleNavAndClose('plans')} icon={<Zap size={20} />} label="Plans" />
-                            <DropdownItem onClick={() => handleNavAndClose('settings')} icon={<Settings size={20} />} label="Settings" />
-                        </div>
-
-                        {/* Footer / Logout */}
-                        <div style={{ marginTop: 'auto', borderTop: '1px solid hsl(var(--color-border))', paddingTop: '16px' }}>
-                            <button onClick={handleLogout} style={{
-                                display: 'flex', alignItems: 'center', gap: '12px',
-                                width: '100%', padding: '12px', borderRadius: '12px',
-                                border: 'none', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer',
-                                fontSize: '15px', color: '#EF4444', fontWeight: 600, textAlign: 'left'
-                            }}>
-                                <LogOut size={18} /> Logout
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* --- MOBILE MENU SIDE DRAWER REMOVED --- */}
 
 
             {/* Main Content Container */}
@@ -372,7 +389,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
             <div className="visible-mobile" style={{
                 position: 'fixed', bottom: 0, left: 0, width: '100%', height: '64px',
                 backgroundColor: 'hsl(var(--color-bg-card))',
-                borderTop: `1px solid hsl(var(--color-border-light))`,
+                borderTop: `1px solid hsl(var(--color - border - light))`,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-around', zIndex: 1000
             }}>
                 <button onClick={() => onNavigate('dashboard')} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', color: 'hsl(var(--color-text-secondary))' }}>
@@ -410,7 +427,7 @@ const Layout = ({ children, onNavigate, balance, onAddFunds, userProfile = {} })
                                 bottom: '70px',
                                 right: 0,
                                 background: 'hsl(var(--color-bg-card))',
-                                border: `1px solid hsl(var(--color-border-light))`,
+                                border: `1px solid hsl(var(--color - border - light))`,
                                 borderRadius: '12px',
                                 boxShadow: 'var(--shadow-xl)',
                                 minWidth: '180px',

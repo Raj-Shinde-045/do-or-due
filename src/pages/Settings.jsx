@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
-import { User, Save, Mail, Moon, Sun, Bell, Shield, Trash2, Camera, LogOut, Heart, ArrowLeft } from 'lucide-react';
+import { User, Save, Mail, Moon, Sun, Bell, Shield, Trash2, Camera, LogOut, Heart, ArrowLeft, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { updateUserProfile } from '../services/dbService';
+import { updateUserProfile, submitFeedback } from '../services/dbService';
 import AvatarWithEdit from '../components/AvatarWithEdit';
 import { CHARITIES } from '../constants/charities';
+
+const ContentWrapper = ({ children, title, onBack }) => (
+    <div className="content-wrapper">
+        <div className="mobile-header">
+            <button onClick={onBack} className="back-btn">
+                <ArrowLeft size={20} />
+            </button>
+            <h2>{title}</h2>
+        </div>
+        {children}
+    </div>
+);
 
 const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
     const { currentUser, logout, updateUserPassword, deleteUserAccount } = useAuth();
@@ -23,6 +35,11 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
     // Mock States for toggles
     const [notifications, setNotifications] = useState(true);
     const [emailUpdates, setEmailUpdates] = useState(false);
+
+    // Feedback State
+    const [feedbackTitle, setFeedbackTitle] = useState('');
+    const [feedbackDesc, setFeedbackDesc] = useState('');
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
 
     const handleAvatarChange = async (newAvatar) => {
         setSelectedAvatar(newAvatar);
@@ -123,6 +140,25 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
         });
     };
 
+    const handleFeedbackSubmit = async () => {
+        if (!feedbackTitle.trim() || !feedbackDesc.trim()) {
+            onShowPopup?.({ title: 'Missing Info', message: 'Please provide both title and description.', type: 'warning' });
+            return;
+        }
+
+        setFeedbackLoading(true);
+        try {
+            await submitFeedback(currentUser.uid, currentUser.email, feedbackTitle, feedbackDesc);
+            setFeedbackTitle('');
+            setFeedbackDesc('');
+            onShowPopup?.({ title: 'Feedback Sent', message: 'Thank you for your feedback!', type: 'success' });
+        } catch (error) {
+            onShowPopup?.({ title: 'Error', message: 'Failed to send feedback. Please try again.', type: 'error' });
+        } finally {
+            setFeedbackLoading(false);
+        }
+    };
+
     const [activeTab, setActiveTab] = useState('profile');
     const [mobileShowContent, setMobileShowContent] = useState(false);
 
@@ -143,18 +179,6 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
     };
 
     const renderContent = () => {
-        // Content wrapper with back button for mobile
-        const ContentWrapper = ({ children, title }) => (
-            <div className="content-wrapper">
-                <div className="mobile-header">
-                    <button onClick={handleBackToMenu} className="back-btn">
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h2>{title}</h2>
-                </div>
-                {children}
-            </div>
-        );
 
         let content = null;
         let title = '';
@@ -367,12 +391,58 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
                     </div>
                 );
                 break;
+            case 'feedback':
+                title = 'Feedback';
+                content = (
+                    <div className="settings-card">
+                        <div className="card-header">
+                            <MessageSquare size={20} className="card-icon" />
+                            <h3>{title}</h3>
+                        </div>
+                        <div className="card-body">
+                            <p style={{ fontSize: '14px', color: 'hsl(var(--color-text-secondary))', marginBottom: '16px' }}>
+                                Found a bug or have a suggestion? We'd love to hear from you.
+                            </p>
+                            <div className="form-group">
+                                <label>Title</label>
+                                <input
+                                    type="text"
+                                    className="input-field"
+                                    style={{ width: '100%', padding: '12px', background: 'hsl(var(--color-bg-input))', border: '1px solid hsl(var(--color-border))', borderRadius: '8px', color: 'hsl(var(--color-text-main))' }}
+                                    placeholder="Brief summary of the issue"
+                                    value={feedbackTitle}
+                                    onChange={(e) => setFeedbackTitle(e.target.value)}
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginTop: '16px' }}>
+                                <label>Description</label>
+                                <textarea
+                                    rows="5"
+                                    className="input-field"
+                                    style={{ width: '100%', padding: '12px', background: 'hsl(var(--color-bg-input))', border: '1px solid hsl(var(--color-border))', borderRadius: '8px', color: 'hsl(var(--color-text-main))', fontFamily: 'inherit', resize: 'vertical' }}
+                                    placeholder="Tell us more details..."
+                                    value={feedbackDesc}
+                                    onChange={(e) => setFeedbackDesc(e.target.value)}
+                                />
+                            </div>
+                            <button
+                                className="btn btn-primary"
+                                style={{ marginTop: '20px', width: '100%' }}
+                                onClick={handleFeedbackSubmit}
+                                disabled={feedbackLoading}
+                            >
+                                {feedbackLoading ? 'Sending...' : 'Send Feedback'}
+                            </button>
+                        </div>
+                    </div>
+                );
+                break;
             default:
                 content = null;
         }
 
         return (
-            <ContentWrapper title={title}>
+            <ContentWrapper title={title} onBack={handleBackToMenu}>
                 <div key={activeTab} className="animate-in">
                     {content}
                 </div>
@@ -430,6 +500,7 @@ const Settings = ({ userProfile, onProfileUpdate, onShowPopup }) => {
                         <TabButton id="preferences" icon={Bell} label="Preferences" />
                         <TabButton id="charity" icon={Heart} label="Charity" />
                         <TabButton id="security" icon={Shield} label="Security" />
+                        <TabButton id="feedback" icon={MessageSquare} label="Feedback" />
                     </div>
                 </div>
 

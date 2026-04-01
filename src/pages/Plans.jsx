@@ -51,7 +51,7 @@ const Plans = ({ onShowPopup, userProfile }) => {
             id: 'elite',
             name: 'Elite',
             subtitle: 'Maximum Power & Perks',
-            price: '₹499',
+            price: '₹199',
             period: '/month',
             savings: 'Includes Priority Support',
             description: 'For power users',
@@ -81,7 +81,7 @@ const Plans = ({ onShowPopup, userProfile }) => {
                     Select the perfect plan for your productivity
                 </p>
                 <div style={{ marginTop: '16px', display: 'inline-block', padding: '6px 12px', background: 'hsl(var(--color-bg-input))', borderRadius: '20px', fontSize: '13px', fontWeight: 600, color: 'hsl(var(--color-text-main))', border: '1px solid hsl(var(--color-border))' }}>
-                    Current Plan: <span style={{ color: 'hsl(var(--color-primary))', textTransform: 'uppercase' }}>{currentPlanId}</span>
+                    Current Plan: <span style={{ color: 'hsl(var(--color-accent-blue))', textTransform: 'uppercase', fontWeight: 700 }}>{currentPlanId}</span>
                 </div>
             </div>
 
@@ -233,8 +233,8 @@ const Plans = ({ onShowPopup, userProfile }) => {
                                 }}
                                 disabled={!isHigher}
                                 onClick={() => isHigher && onShowPopup && onShowPopup({
-                                    title: 'Upgrade Request',
-                                    message: `You are requesting to upgrade to ${plan.name}. Please contact admin or proceed to payment.`,
+                                    title: 'Coming Soon',
+                                    message: 'Plans are yet to be introduced and will be introduced soon.',
                                     type: 'info'
                                 })}
                             >
@@ -292,7 +292,7 @@ const Plans = ({ onShowPopup, userProfile }) => {
                             e.preventDefault();
                             onShowPopup && onShowPopup({
                                 title: 'Contact Us',
-                                message: 'Our support team is here to help! Email us at support@doOrdue.com',
+                                message: 'Our support team is here to help! Email us at ashitoshlavhate2@gmail.com',
                                 type: 'info'
                             });
                         }}

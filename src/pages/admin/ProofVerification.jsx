@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { subscribeToAdminTasks, approveProof, rejectProof, adminLogout, requestNotificationPermission, onMessageListener } from '../../services/adminService';
 import { saveAdminToken } from '../../services/dbService';
-import { LogOut, RefreshCw, Moon, Sun } from 'lucide-react';
+import { LogOut, RefreshCw, Moon, Sun, Coins, MessageSquare } from 'lucide-react';
 import Popup from '../../components/Popup';
 import AdminDashboardHome from './components/AdminDashboardHome';
 import AdminTaskList from './components/AdminTaskList';
 import AdminTaskDetail from './components/AdminTaskDetail';
-import AdminUserList from './components/AdminUserList'; // Import new component
+import AdminUserList from './components/AdminUserList';
+import AdminFeedbackList from './components/AdminFeedbackList';
 import { useTheme } from '../../context/ThemeContext';
-import { Coins } from 'lucide-react'; // Import Coins icon
+
 
 const ProofVerification = ({ onLogout }) => {
     // Theme Hook
@@ -40,7 +41,7 @@ const ProofVerification = ({ onLogout }) => {
             const token = await requestNotificationPermission();
             if (token) {
                 await saveAdminToken(token);
-                console.log("Admin Notification Token Saved");
+                // console.log("Admin Notification Token Saved");
             }
         };
         initNotifications();
@@ -132,6 +133,11 @@ const ProofVerification = ({ onLogout }) => {
         setSelectedCategory(null);
     };
 
+    const handleNavigateToFeedbacks = () => {
+        setViewMode('feedbacks');
+        setSelectedCategory(null);
+    };
+
     // --- Rendering ---
 
     // Derived Categorized Lists
@@ -184,6 +190,8 @@ const ProofVerification = ({ onLogout }) => {
                 />;
             case 'users':
                 return <AdminUserList onBack={handleBackToHome} />;
+            case 'feedbacks':
+                return <AdminFeedbackList onBack={handleBackToHome} />;
             default:
                 return <div>Unknown View</div>;
         }
@@ -206,6 +214,25 @@ const ProofVerification = ({ onLogout }) => {
                     </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                        onClick={handleNavigateToFeedbacks}
+                        style={{
+                            background: isDark ? '#334155' : 'white',
+                            border: `1px solid ${isDark ? '#475569' : '#E2E8F0'}`,
+                            color: isDark ? '#F8FAFC' : '#64748B',
+                            padding: '10px 16px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontWeight: 600,
+                            fontSize: '13px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <MessageSquare size={16} /> <span className="hidden-mobile">Feedback</span>
+                    </button>
                     <button
                         onClick={handleNavigateToUsers}
                         style={{
@@ -246,14 +273,14 @@ const ProofVerification = ({ onLogout }) => {
                         <LogOut size={14} /> <span className="hidden-mobile">Logout</span>
                     </button>
                 </div>
-            </header>
+            </header >
 
             {/* Main Area */}
-            <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px' }}>
+            < main style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px' }}>
                 {renderContent()}
 
 
-            </main>
+            </main >
 
             <Popup
                 isOpen={popup.isOpen}
@@ -269,7 +296,7 @@ const ProofVerification = ({ onLogout }) => {
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 .animate-in { animation: fadeIn 0.4s ease-out forwards; }
             `}</style>
-        </div>
+        </div >
     );
 };
 
